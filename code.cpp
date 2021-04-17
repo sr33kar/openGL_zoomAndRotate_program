@@ -21,6 +21,16 @@ float sumX=0,sumY=0,sumZ=0;
 float centroidX=0,centroidY=0,centroidZ=0;
 int vertCount=0;
 float z_max=0;
+float valX=0,valY=0;
+float x_1,y_1,z_1,x2,x3,y2,y3,z2,z3;
+float a,b,c,d;
+float angle;
+float sa,sb,sc;
+float angle1;
+float a1,a2,a3,b1,b2,b3,c1,c2,c3,d1,d2,d3;
+float p1,p2,p3,p4,q1,q2,q3,q4,r1,r2,r3,r4;
+float k1,k2,k3;
+float theta1=0,theta2=0;
 void initRendering()
 {
     glEnable(GL_DEPTH_TEST);
@@ -39,12 +49,22 @@ void keyPressed(int key,int x,int y)
 {
     if(key==GLUT_KEY_UP)
     {
-        zoomIn();
+        theta2+=5;
         glutPostRedisplay();
     }
     if(key==GLUT_KEY_DOWN)
     {
-        zoomOut();
+        theta2-=5;
+        glutPostRedisplay();
+    }
+    if(key==GLUT_KEY_LEFT)
+    {
+        theta1+=5;
+        glutPostRedisplay();
+    }
+    if(key==GLUT_KEY_RIGHT)
+    {
+        theta1-=5;
         glutPostRedisplay();
     }
 }
@@ -132,7 +152,7 @@ void STL_Read()
         sumY+=vertices[VerticesCnt+1];
 		cin >> vertex;vertices[VerticesCnt+2] = gen_vertex(vertex);
         sumZ+=vertices[VerticesCnt+2];
-        z_max=max(z_max, vertices[VerticesCnt+2]);
+        z_max=min(z_max, vertices[VerticesCnt+2]);
 		vertices[VerticesCnt+3] = 0.3f;
 		vertices[VerticesCnt+4] = 0.4f;
 		vertices[VerticesCnt+5] = 0.5f;//Set vertex color
@@ -146,7 +166,7 @@ void STL_Read()
         sumY+=vertices[VerticesCnt+1];
 		cin >> vertex;vertices[VerticesCnt+2] = gen_vertex(vertex);
         sumZ+=vertices[VerticesCnt+2];
-        z_max=max(z_max, vertices[VerticesCnt+2]);
+        z_max=min(z_max, vertices[VerticesCnt+2]);
 		vertices[VerticesCnt+3] = 0.3f;
 		vertices[VerticesCnt+4] = 0.4f;
 		vertices[VerticesCnt+5] = 0.5f;//Set vertex color
@@ -160,7 +180,7 @@ void STL_Read()
         sumY+=vertices[VerticesCnt+1];
 		cin >> vertex;vertices[VerticesCnt+2] = gen_vertex(vertex);
         sumZ+=vertices[VerticesCnt+2];
-        z_max=max(z_max, vertices[VerticesCnt+2]);
+        z_max=min(z_max, vertices[VerticesCnt+2]);
 		vertices[VerticesCnt+3] = 0.3f;
 		vertices[VerticesCnt+4] = 0.4f;
 		vertices[VerticesCnt+5] = 0.5f;//Set vertex color
@@ -180,7 +200,7 @@ std::vector< int > points;
 bool isFirstDown=true;
 void mouse( int button, int state, int x, int y )
 {
-    cout<<button<<" "<<state<<endl;
+    //cout<<button<<" "<<state<<endl;
     if(button==0){
         if(state==0){
                 orgX = x;
@@ -197,16 +217,7 @@ void mouse( int button, int state, int x, int y )
     }
     glutPostRedisplay();
 }
-float valX=0,valY=0;
-float x_1,y_1,z_1,x2,x3,y2,y3,z2,z3;
-float a,b,c,d;
-float angle;
-float sa,sb,sc;
-float angle1;
-float a1,a2,a3,b1,b2,b3,c1,c2,c3,d1,d2,d3;
-float p1,p2,p3,p4,q1,q2,q3,q4,r1,r2,r3,r4;
-float k1,k2,k3;
-float theta1=0,theta2=0;
+
 float distance(float x1, float y1,float z1, float x2, float y2, float z2)
 {
     // Calculating distance
@@ -222,10 +233,10 @@ void motion( int x, int y )
     z_1=centroidZ;
     x2=orgX;
     y2=orgY;
-    z3=10;
+    z3=z_max;
     x3=x;
     y3=y;
-    z3=10;
+    z3=z_max;
     a=(y2-y2)*(z3-z_1)-(y3-y_1)*(z2-z_1);
     b=(z2-z_1)*(x3-x_1)-(x2-x_1)*(z3-z_1);
     c=(x2-x_1)*(y3-y_1)-(x3-x_1)*(y2-y2);
@@ -244,7 +255,7 @@ void motion( int x, int y )
         ang1*=-1;
     }
     theta1+=ang1*180/PI;
-
+    
     float sa2= distance2(x_1,y_1,x2,y2);
     float sb2= distance2(x_1,y_1, x3,y3);
     float sc2= distance2(x2,y2, x3,y3);
@@ -253,7 +264,7 @@ void motion( int x, int y )
         ang2*=-1;
     }
     theta2+=ang2*180/PI;
-
+/*
     angle = acos( (sa*sa +sb*sb - (sc*sc))/(2*sa*sb));  //----------sign matters here
     float L= sqrt(a*a+b*b+c*c);
     float V= sqrt(b*b+c*c);
@@ -266,10 +277,10 @@ void motion( int x, int y )
     }
     angle1+= angle*180/PI;
 
-    cout<<angle<<" "<<(sa*sa +sb*sb - (sc*sc))/(2*sa*sb)<<endl;
+    cout<<angle<<" "<<(sa*sa +sb*sb - (sc*sc))/(2*sa*sb)<<endl;*/
     //angle=angle;
     
-    
+    /*
 
     a1= (V/L)*cosTheta; a2= (c/V)*sinTheta- ((a*b)/(V*L))*cosTheta; a3=(b/V)*sinTheta - ((a*c)/(V*L))*cosTheta;
     b1= (V/L)*sinTheta; a2= -1*(c/V)*cosTheta- ((a*b)/(V*L))*sinTheta; a3=-1*(b/V)*cosTheta - ((a*c)/(V*L))*cosTheta;
@@ -282,7 +293,7 @@ void motion( int x, int y )
     p1= (a1*V+a*c1)/L; p2= (a2*V+a*c2)/L; p3= (a3*V+a*c3)/L; p4= -1*((d1*V)/L+(d2*a)/L-x_1);
     q1= ((-1*a*b*a1)/(V*L)+(c*b1)/V+(b*c1)/L); q2= ((-1*a*b*a2)/(V*L)+(c*b2)/V+(b*c2)/L); q3= ((-1*a*b*a2)/(V*L)+(c*b3)/V+(b*c3)/L); q4= ((a*b*d1)/(V*L)-(c*d2)/V-(b*d3)/L+y_1);
     r1= ((-1*a*c*a1)/(V*L)-(b*b1)/V+(c*c1)/L); r2= ((-1*a*c*a2)/(V*L)-(b*b2)/V+(c*c2)/L); r3= ((-1*a*c*a3)/(V*L)-(b*b3)/V+(c*c3)/L); r4= ((a*c*d1)/(V*L)+(b*d2)/V-(c*d3)/L+z_1);
-
+*/
     /*for(int i=0;i<VerticesCnt;i+=6){
         k1=vertices[i];
         k2=vertices[i+1];
@@ -305,7 +316,7 @@ void display()
     double w = glutGet( GLUT_WINDOW_WIDTH );
     double h = glutGet( GLUT_WINDOW_HEIGHT );
     glOrtho( 0, w, h, 0, -1, 1 );
-    glTranslatef(800.0f,500.0f,0);
+    glTranslatef(200.0f,150.0f,0);
     glScalef(2,2,0);
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
