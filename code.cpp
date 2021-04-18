@@ -26,16 +26,31 @@ void initRendering()
 {
     glEnable(GL_DEPTH_TEST);
 }
+/*
+ * zoomIn funtion multiplies the coordinates of each vertex to make a bigger projection when srolled up
+ *
+*/
 void zoomIn(){
     for(int i=0;i<VerticesCnt;i++){
             vertices[i]=vertices[i]*1.10;
         }
 }
+/*
+ * zoomOut funtion diminishes the coordinates of each vertex to make a smaller projection when srolled down
+ *
+*/
 void zoomOut(){
     for(int i=0;i<VerticesCnt;i++){
             vertices[i]=vertices[i]*0.90;
         }
 }
+/*
+ * user can rotate the object by using keyboard arrow keys
+ * up arrow key increases the angle of projection with X-axis by a value of 5deg on each stroke
+ * down arrow key decreases the angle of projection with X-axis by a value of 5deg on each stroke
+ * left arrow key decreases the angle of projection with Y-axis by a value of 5deg on each stroke
+ * right arrow key increases the angle of projection with Y-axis by a value of 5deg on each stroke
+*/
 void keyPressed(int key,int x,int y)
 {
     if(key==GLUT_KEY_UP)
@@ -59,6 +74,11 @@ void keyPressed(int key,int x,int y)
         glutPostRedisplay();
     }
 }
+/*
+ *below three functions are used for data processing incase of the STL file having scientific notation
+ * two are for making prior part and post part of number (example. 230e-10) to decimal numbers 
+ * then the gen_vertex is used to generate the float value by combinig the both produced above
+*/
 
 float pow0_1(int a)
 {
@@ -98,11 +118,21 @@ float gen_vertex(char input[15])
         v = (float)temp1 * multipler;
     }
     return v;
-}//////////////////////////// These three functions return the floating point value of a component of the vertex
-void STL_Read()
+}
+/*
+ * reading the stl files
+ * i ignored the first line as most of the stl files doesn't have it same( we will lose some important data but now for us it is not needed)
+ * read data one after the other vertex and append it to the verteices vector.
+ * each 6 consecutive numbers in a stl file refers to a vertex, where first 3 are the coordinates and other 3 corresponds to the color data
+ * each 3 consecutive vertices make up a triangle and all these triangles make up the object we have to render.
+ * while reading the vertices we also calculate the centroid of the object around which i restricted the movement(rotation). 
+ * reading stops when we reach the word that starts with 'e' on the first line of a vertex
+
+*/
+void STL_Read(char* s)
 {
 	char word[15];
-    freopen("binary.stl","r",stdin);
+    freopen(s,"r",stdin);
     string str;
     getline(cin,str);
     int i;
@@ -132,9 +162,9 @@ void STL_Read()
         vertices.push_back(0);
         vertices.push_back(0);
         vertices.push_back(0);
-        getline(cin,str);//cin >> word;cin >> word;cin >> word;cin >> word;/////////facet normal
-        cin >> word;cin >> word;/////////outer loop
-        ///////////////////Read in the first vertex
+        getline(cin,str);
+        cin >> word;cin >> word;
+        //---------------------------------------Read in the first vertex
         cin >> word;
         //cout << i;
         cin >> vertex;vertices[VerticesCnt] = gen_vertex(vertex);
@@ -149,7 +179,7 @@ void STL_Read()
 		vertices[VerticesCnt+5] = 0.5f;//Set vertex color
 		VerticesCnt += 6;
         vertCount+=1;
-		////////////////////////////////Read in the second vertex
+		//---------------------------------------Read in the second vertex
 		cin >> word;
         cin >> vertex;vertices[VerticesCnt] = gen_vertex(vertex);
         sumX+=vertices[VerticesCnt];
@@ -163,7 +193,7 @@ void STL_Read()
 		vertices[VerticesCnt+5] = 0.5f;//Set vertex color
 		VerticesCnt += 6;
         vertCount+=1;
-		///////////////////////////////////////////// read the third Vertex
+		//--------------------------------------Read the third Vertex
 		cin >> word;
         cin >> vertex;vertices[VerticesCnt] = gen_vertex(vertex);
         sumX+=vertices[VerticesCnt];
@@ -177,7 +207,7 @@ void STL_Read()
 		vertices[VerticesCnt+5] = 0.5f;//Set vertex color
 		VerticesCnt += 6;
         vertCount+=1;
-		////////////////////////////////////
+        //------------------------------------
 		cin >> word;//endloop
 		cin >> word;//endfacet
 
@@ -187,16 +217,29 @@ void STL_Read()
     centroidZ=sumZ/vertCount;
     fclose(stdin);
 }
+/*
+ * mouse function is invoked by glut as we have given 'mouse' to be executed when there is a movement in mouse
+ * button gives us which button of the mouse it is beign pressed
+ * button:
+ *      0- left click, 3- scroll up, 4- scroll down 
+ * state:
+ *      0- pressed down, 1- released
+ * 
+ * when the user scrolls up zoomIn function is called and projection get bigger
+ * when the user scrolls down zoomOut function is called and projection get smaller
+ * when the user tries to drag:
+ *      - when the left click is pressed down we record the coordinates of mouse pointer when pressed down
+ *      - when the user moves the mouse keeping the left click pressed, we tract the motion using motion()
+ *  
+
+*/
 void mouse( int button, int state, int x, int y )
 {
-    //cout<<button<<" "<<state<<endl;
     if(button==0){
         if(state==0){
                 orgX = x;
                 orgY = y;
         }
-        
-
     }
     else if(button==3){
         zoomIn();
@@ -206,14 +249,32 @@ void mouse( int button, int state, int x, int y )
     }
     glutPostRedisplay();
 }
-
-float distance(float x1, float y1,float z1, float x2, float y2, float z2)
+// function to calculate the distance between two 3D points
+float distance3(float x1, float y1,float z1, float x2, float y2, float z2)
 {
     return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2) * 1.0 + pow(z2-z1, 2));
 }
+// function to calculate the distance between two 2D points
 float distance2(float x1,float y1, float x2, float y2){
     return sqrt(pow(x2 - x1, 2)*1.0 + pow(y2 - y1, 2) * 1.0);
 }
+/*
+ * now we have the centroind of the object and the coordinates of mouse when it is first pressed down
+ * and now with this motion tracker we get the current coordinates of the mouse
+ * method 1: now our job is to rotate the object based on the angle that is formed by the current point, the started point with the centroid
+ *      - this seems to be right fit for this but when we find the angles it has to be calculated by the cosine rule and that gives a not-defined (nan) when it encouters a 90deg.
+ * methoed 2: project the triangle formed by those 3 points on to XZ plane and YZ plane to get the angles formed in each of the planes and transform the projection by that angle
+ *      - this also proved to be wrong as here also there is a chance of getting nan for cosine inverse and the program misbehaves
+ * methoed 3: 
+ *      - get the difference between x-coordinates and if that is positive increase the transform angle around Y-axis by 1 else decrease by 1
+ *      - get the difference between y-coordinates and if that is positive increase the amout of transformation around X-axis by 1 else decrease by 1.
+ *      - and also to smoothen the user interface if the difference between x-coordinates over dominates that of y-coordinates, make the transformation around x-axis to zero
+ *      - in the same way if the difference between y-coordinates over dominates that of x-coordinates, make the transformation around y-axis to zero
+ * we are using method 3.
+ * NOTE: after each call of motion function we call glutPostRedisplay() to re-render by calling the display function
+ * 
+ * also we put a sleep of 5ms to smoothen the user interaction
+*/
 void motion( int x, int y )  //--------------insert a bit of delay in rendering to make this work properly
 {
     x_1=centroidX;
@@ -225,24 +286,6 @@ void motion( int x, int y )  //--------------insert a bit of delay in rendering 
     x3=x*1.0f;
     y3=y*1.0;
     z3=z_max;
-    /*float d;
-    for(int i=0;i<VerticesCnt;i+=6){
-        k1=vertices[i];
-        k2=vertices[i+1];
-        k3=vertices[i+2];
-        d=distance(x2,y2,z2,x3,y3,z3);
-        if(d<min_distance){
-            x2=k1;y2=k2;z2=k3;
-            min_distance=d;
-        }
-        
-    }*/
-    /*cout<< x_1<<" "<<y_1<<" "<<z_1<<endl;
-    float sa1= distance2(x_1,z_1,x2,z2);
-    float sb1= distance2(x_1,z_1, x3,z3);
-    float sc1= distance2(x2,z2, x3,z3);
-    cout<<sa1<<" "<<sb1<<" "<<sc1<<" "<<(sa1*sa1 +sb1*sb1 - (sc1*sc1)+0.0f)/(2.0f*sa1*sb1)<<endl;
-    float ang1= acos( (sa1*sa1 +sb1*sb1 - (sc1*sc1)+0.0f)/(2.0f*sa1*sb1));*/
     float ang1=0,ang2=0;
     if(x3<x2){
         //ang1*=-1;
@@ -251,77 +294,35 @@ void motion( int x, int y )  //--------------insert a bit of delay in rendering 
     else{
         ang1+=1;
     }
-    /*float sa2= distance2(x_1,y_1,x2,y2);
-    float sb2= distance2(x_1,y_1, x3,y3);
-    float sc2= distance2(x2,y2, x3,y3);
-    float ang2= acos( (sa2*sa2 +sb2*sb2 - (sc2*sc2))/(2.0f*sa2*sb2));*/
     if(y3<y2){
-        //ang2*=-1;
         ang2-=1;
     }
     else{
         ang2+=1;
     }
-    if((abs(x2-x3)/abs(y3-y2))>2.0){
+    if((abs(x2-x3)/abs(y3-y2))>5){
         ang2=0;
     }
-    else if((abs(y2-y3)/abs(x3-x2))>2.0){
+    else if((abs(y2-y3)/abs(x3-x2))>5){
         ang1=0;
     }
     theta1+=ang1;
     theta2+=ang2;
-    /*if(ang1>ang2+0.001){
-        ang2=0;
-    }
-    else if(ang2>ang1+0.001){
-        ang1=0;
-    }*/
-    //theta1+=ang1*180/PI;
-    //theta2+=ang2*180/PI;
-    //cout<<ang1<<" "<<ang2<<endl;
-/*
-    angle = acos( (sa*sa +sb*sb - (sc*sc))/(2*sa*sb));  //----------sign matters here
-    float L= sqrt(a*a+b*b+c*c);
-    float V= sqrt(b*b+c*c);
-    float cosTheta =cos(angle);
-    float sinTheta =sin(angle);
-    if(!(x3>x2 && y3==y2 || x3==x2 && y3>y2 || x3>x2 && y3>y2)){
-        cosTheta*=-1;
-        sinTheta*=-1;
-        angle*=-1;
-    }
-    angle1+= angle*180/PI;
-
-    cout<<angle<<" "<<(sa*sa +sb*sb - (sc*sc))/(2*sa*sb)<<endl;*/
-    //angle=angle;
-    
-    /*
-
-    a1= (V/L)*cosTheta; a2= (c/V)*sinTheta- ((a*b)/(V*L))*cosTheta; a3=(b/V)*sinTheta - ((a*c)/(V*L))*cosTheta;
-    b1= (V/L)*sinTheta; a2= -1*(c/V)*cosTheta- ((a*b)/(V*L))*sinTheta; a3=-1*(b/V)*cosTheta - ((a*c)/(V*L))*cosTheta;
-    c1= (a/L); c2= (b/L); c3= (c/L);
-    d1= -1*(a1*x_1+a2*y_1+a3*z_1);
-    d2= -1*(b1*x_1+b2*y_1+b3*z_1);
-    d3= -1*(c1*x_1+c2*y_1+c3*z_1);
-    
-    cout<< a<<" "<<b<<" "<<c<<" "<<a1<<" "<<b1<<" "<<c1<<" "<<d1<<" "<<d2<<" "<<d3<<L<<" "<<V<<endl;
-    p1= (a1*V+a*c1)/L; p2= (a2*V+a*c2)/L; p3= (a3*V+a*c3)/L; p4= -1*((d1*V)/L+(d2*a)/L-x_1);
-    q1= ((-1*a*b*a1)/(V*L)+(c*b1)/V+(b*c1)/L); q2= ((-1*a*b*a2)/(V*L)+(c*b2)/V+(b*c2)/L); q3= ((-1*a*b*a2)/(V*L)+(c*b3)/V+(b*c3)/L); q4= ((a*b*d1)/(V*L)-(c*d2)/V-(b*d3)/L+y_1);
-    r1= ((-1*a*c*a1)/(V*L)-(b*b1)/V+(c*c1)/L); r2= ((-1*a*c*a2)/(V*L)-(b*b2)/V+(c*c2)/L); r3= ((-1*a*c*a3)/(V*L)-(b*b3)/V+(c*c3)/L); r4= ((a*c*d1)/(V*L)+(b*d2)/V-(c*d3)/L+z_1);
-*/
-    /*for(int i=0;i<VerticesCnt;i+=6){
-        k1=vertices[i];
-        k2=vertices[i+1];
-        k3=vertices[i+2];
-        vertices[i]= p1*k1+p2*k2+p3*k3+p4;
-        vertices[i+1]= q1*k1+q2*k2+q3*q3+q4;
-        vertices[i+2]= r1*k1+r2*k2+r3*k3+r4;
-        
-    }*/
-    //glutTimerFunc(5,mouse, 0);
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
     glutPostRedisplay();
 }
+
+/*
+ * this is called whenever openGL has to render the output image on screen
+ * we draw using the GL primitive 'GL_LINES' to draw all the triangles of each 3 consequent points(a,b,c) as lines ab, bc,ca
+ * give pink colour for drawing
+ * rotate the object projection by theta2 around X-axis and theta1 around Y-axis by using glRotatef() function
+ * 
+ * NOTE: The angles theta1 and theta2 are generated in motion() function 
+ * 
+ * 
+ * 
+*/
 void display()
 {
     glClearColor( 1, 1, 1, 1 );
@@ -332,7 +333,7 @@ void display()
     double w = glutGet( GLUT_WINDOW_WIDTH );
     double h = glutGet( GLUT_WINDOW_HEIGHT );
     glOrtho( 0, w, h, 0, -1, 1 );
-    glTranslatef(500.0f,300.0f,0);
+    glTranslatef(400.0f,300.0f,0);
     glScalef(2,2,0);
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
@@ -352,29 +353,28 @@ void display()
     glPointSize(10.0);
     glBegin(GL_POINTS);
     {
-            glVertex3f(0, 0, 0);
+            glVertex3f(0, 0, 0);        //display the origin
     }
     glEnd();
     glutSwapBuffers();
 }
-
+//----------------------main function------------------------------------------------------------
 int main( int argc, char** argv )
 {
 
-    STL_Read();
-    for(int i=0;i<VerticesCnt;i+=6){
+    STL_Read(argv[1]);
+    for(int i=0;i<VerticesCnt;i+=6){  //-----translate the object to origin
         vertices[i]-=centroidX;
         vertices[i+1]-=centroidY;
         vertices[i+2]-=centroidZ;
-        
     }
     centroidX=0;
     centroidY=0;
     centroidZ=0;
     glutInit( &argc, argv );
     glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE );
+    glutInitWindowSize(800, 500);
     glutCreateWindow( "B170739CS" );
-    glutInitWindowSize(1000, 1000);
 
     glutMouseFunc( mouse );
     glutMotionFunc( motion );
@@ -384,8 +384,6 @@ int main( int argc, char** argv )
     glutDisplayFunc(display);
     
     glutIdleFunc(display);
-    
-    //glutReshapeFunc(reshape);
     
     glutSpecialFunc(keyPressed);
     
