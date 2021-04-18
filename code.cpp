@@ -10,27 +10,18 @@ using namespace std;
 #include<GL/glut.h>
 #endif
 
-//float vertices[10000000];//Vertex array
 #define PI 3.141592;
 vector<float> vertices;
 int VerticesCnt = 0;
 float orgX=0,orgY=0;
-float rotX=0,rotY=0;
-float preRotX=0,preRotY=0;
 float sumX=0,sumY=0,sumZ=0;
 float centroidX=0,centroidY=0,centroidZ=0;
 int vertCount=0;
 float z_max=0;
 float valX=0,valY=0;
 float x_1,y_1,z_1,x2,x3,y2,y3,z2,z3;
-float a,b,c,d;
-float angle;
-float sa,sb,sc;
-float angle1;
-float a1,a2,a3,b1,b2,b3,c1,c2,c3,d1,d2,d3;
-float p1,p2,p3,p4,q1,q2,q3,q4,r1,r2,r3,r4;
-float k1,k2,k3;
 float theta1=0,theta2=0;
+
 void initRendering()
 {
     glEnable(GL_DEPTH_TEST);
@@ -111,7 +102,7 @@ float gen_vertex(char input[15])
 void STL_Read()
 {
 	char word[15];
-    freopen("bottle.stl","r",stdin);
+    freopen("binary.stl","r",stdin);
     string str;
     getline(cin,str);
     int i;
@@ -196,8 +187,6 @@ void STL_Read()
     centroidZ=sumZ/vertCount;
     fclose(stdin);
 }
-std::vector< int > points;
-bool isFirstDown=true;
 void mouse( int button, int state, int x, int y )
 {
     //cout<<button<<" "<<state<<endl;
@@ -220,13 +209,12 @@ void mouse( int button, int state, int x, int y )
 
 float distance(float x1, float y1,float z1, float x2, float y2, float z2)
 {
-    // Calculating distance
     return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2) * 1.0 + pow(z2-z1, 2));
 }
 float distance2(float x1,float y1, float x2, float y2){
-    return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2) * 1.0);
+    return sqrt(pow(x2 - x1, 2)*1.0 + pow(y2 - y1, 2) * 1.0);
 }
-void motion( int x, int y )
+void motion( int x, int y )  //--------------insert a bit of delay in rendering to make this work properly
 {
     x_1=centroidX;
     y_1=centroidY;
@@ -234,36 +222,63 @@ void motion( int x, int y )
     x2=orgX;
     y2=orgY;
     z3=z_max;
-    x3=x;
-    y3=y;
+    x3=x*1.0f;
+    y3=y*1.0;
     z3=z_max;
-    a=(y2-y2)*(z3-z_1)-(y3-y_1)*(z2-z_1);
-    b=(z2-z_1)*(x3-x_1)-(x2-x_1)*(z3-z_1);
-    c=(x2-x_1)*(y3-y_1)-(x3-x_1)*(y2-y2);
-    d= -1*(a*x_1 +b*y_1 + c*z_1);
-
-
-    sa=distance(x_1,y_1,z_1, x2,y2,z2);
-    sb= distance(x_1,y_1,z_1, x3,y3,z3);
-    sc= distance(x2,y2,z2, x3,y3,z3);
-
+    /*float d;
+    for(int i=0;i<VerticesCnt;i+=6){
+        k1=vertices[i];
+        k2=vertices[i+1];
+        k3=vertices[i+2];
+        d=distance(x2,y2,z2,x3,y3,z3);
+        if(d<min_distance){
+            x2=k1;y2=k2;z2=k3;
+            min_distance=d;
+        }
+        
+    }*/
+    /*cout<< x_1<<" "<<y_1<<" "<<z_1<<endl;
     float sa1= distance2(x_1,z_1,x2,z2);
     float sb1= distance2(x_1,z_1, x3,z3);
     float sc1= distance2(x2,z2, x3,z3);
-    float ang1= acos( (sa1*sa1 +sb1*sb1 - (sc1*sc1))/(2*sa1*sb1));
+    cout<<sa1<<" "<<sb1<<" "<<sc1<<" "<<(sa1*sa1 +sb1*sb1 - (sc1*sc1)+0.0f)/(2.0f*sa1*sb1)<<endl;
+    float ang1= acos( (sa1*sa1 +sb1*sb1 - (sc1*sc1)+0.0f)/(2.0f*sa1*sb1));*/
+    float ang1=0,ang2=0;
     if(x3<x2){
-        ang1*=-1;
+        //ang1*=-1;
+        ang1-=1;
     }
-    theta1+=ang1*180/PI;
-    
-    float sa2= distance2(x_1,y_1,x2,y2);
+    else{
+        ang1+=1;
+    }
+    /*float sa2= distance2(x_1,y_1,x2,y2);
     float sb2= distance2(x_1,y_1, x3,y3);
     float sc2= distance2(x2,y2, x3,y3);
-    float ang2= acos( (sa2*sa2 +sb2*sb2 - (sc2*sc2))/(2*sa2*sb2));
+    float ang2= acos( (sa2*sa2 +sb2*sb2 - (sc2*sc2))/(2.0f*sa2*sb2));*/
     if(y3<y2){
-        ang2*=-1;
+        //ang2*=-1;
+        ang2-=1;
     }
-    theta2+=ang2*180/PI;
+    else{
+        ang2+=1;
+    }
+    if((abs(x2-x3)/abs(y3-y2))>2.0){
+        ang2=0;
+    }
+    else if((abs(y2-y3)/abs(x3-x2))>2.0){
+        ang1=0;
+    }
+    theta1+=ang1;
+    theta2+=ang2;
+    /*if(ang1>ang2+0.001){
+        ang2=0;
+    }
+    else if(ang2>ang1+0.001){
+        ang1=0;
+    }*/
+    //theta1+=ang1*180/PI;
+    //theta2+=ang2*180/PI;
+    //cout<<ang1<<" "<<ang2<<endl;
 /*
     angle = acos( (sa*sa +sb*sb - (sc*sc))/(2*sa*sb));  //----------sign matters here
     float L= sqrt(a*a+b*b+c*c);
@@ -303,7 +318,8 @@ void motion( int x, int y )
         vertices[i+2]= r1*k1+r2*k2+r3*k3+r4;
         
     }*/
-
+    //glutTimerFunc(5,mouse, 0);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
     glutPostRedisplay();
 }
 void display()
@@ -316,7 +332,7 @@ void display()
     double w = glutGet( GLUT_WINDOW_WIDTH );
     double h = glutGet( GLUT_WINDOW_HEIGHT );
     glOrtho( 0, w, h, 0, -1, 1 );
-    glTranslatef(200.0f,150.0f,0);
+    glTranslatef(500.0f,300.0f,0);
     glScalef(2,2,0);
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
