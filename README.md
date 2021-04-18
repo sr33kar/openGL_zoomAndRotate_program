@@ -1,4 +1,4 @@
-# openGL_zoomAndRotate_program
+# openGL zoom and rotate program for objects in STL ASCII format
 OpenGL program C++ program for viewing STL ASCII models.
 
 - Compile the code.cpp file with command
