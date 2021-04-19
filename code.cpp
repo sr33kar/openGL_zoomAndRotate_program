@@ -27,7 +27,7 @@ void initRendering()
     glEnable(GL_DEPTH_TEST);
 }
 /*
- * zoomIn funtion multiplies the coordinates of each vertex to make a bigger projection when srolled up
+ * zoomIn function multiplies the coordinates of each vertex to make a bigger projection when scrolled up
  *
 */
 void zoomIn(){
@@ -36,7 +36,7 @@ void zoomIn(){
         }
 }
 /*
- * zoomOut funtion diminishes the coordinates of each vertex to make a smaller projection when srolled down
+ * zoomOut function diminishes the coordinates of each vertex to make a smaller projection when scrolled down
  *
 */
 void zoomOut(){
@@ -77,7 +77,7 @@ void keyPressed(int key,int x,int y)
 /*
  *below three functions are used for data processing incase of the STL file having scientific notation
  * two are for making prior part and post part of number (example. 230e-10) to decimal numbers 
- * then the gen_vertex is used to generate the float value by combinig the both produced above
+ * then the gen_vertex is used to generate the float value by combining the both produced above
 */
 
 float pow0_1(int a)
@@ -122,7 +122,7 @@ float gen_vertex(char input[15])
 /*
  * reading the stl files
  * i ignored the first line as most of the stl files doesn't have it same( we will lose some important data but now for us it is not needed)
- * read data one after the other vertex and append it to the verteices vector.
+ * read data one after the other vertex and append it to the vertices vector.
  * each 6 consecutive numbers in a stl file refers to a vertex, where first 3 are the coordinates and other 3 corresponds to the color data
  * each 3 consecutive vertices make up a triangle and all these triangles make up the object we have to render.
  * while reading the vertices we also calculate the centroid of the object around which i restricted the movement(rotation). 
@@ -259,7 +259,7 @@ float distance2(float x1,float y1, float x2, float y2){
     return sqrt(pow(x2 - x1, 2)*1.0 + pow(y2 - y1, 2) * 1.0);
 }
 /*
- * now we have the centroind of the object and the coordinates of mouse when it is first pressed down
+ * now we have the centroid of the object and the coordinates of mouse when it is first pressed down
  * and now with this motion tracker we get the current coordinates of the mouse
  * method 1: now our job is to rotate the object based on the angle that is formed by the current point, the started point with the centroid
  *      - this seems to be right fit for this but when we find the angles it has to be calculated by the cosine rule and that gives a not-defined (nan) when it encouters a 90deg.
@@ -268,7 +268,7 @@ float distance2(float x1,float y1, float x2, float y2){
  * methoed 3: 
  *      - get the difference between x-coordinates and if that is positive increase the transform angle around Y-axis by 1 else decrease by 1
  *      - get the difference between y-coordinates and if that is positive increase the amout of transformation around X-axis by 1 else decrease by 1.
- *      - and also to smoothen the user interface if the difference between x-coordinates over dominates that of y-coordinates, make the transformation around x-axis to zero
+ *      - and also to smoothen the user interface, if the difference between x-coordinates over dominates that of y-coordinates, make the transformation around x-axis to zero
  *      - in the same way if the difference between y-coordinates over dominates that of x-coordinates, make the transformation around y-axis to zero
  * we are using method 3.
  * NOTE: after each call of motion function we call glutPostRedisplay() to re-render by calling the display function
@@ -333,7 +333,7 @@ void display()
     double w = glutGet( GLUT_WINDOW_WIDTH );
     double h = glutGet( GLUT_WINDOW_HEIGHT );
     glOrtho( 0, w, h, 0, -1, 1 );
-    glTranslatef(400.0f,300.0f,0);
+    glTranslatef(w/2,h/2,0);  //-----------translate the origin to center of the window each time
     glScalef(2,2,0);
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
@@ -359,6 +359,19 @@ void display()
     glutSwapBuffers();
 }
 //----------------------main function------------------------------------------------------------
+/*
+ * take input file name by command line argument and pass it to STL_Read function
+ * translate the object so that it's centroid moves to origin
+ * calling glutInit()
+ * setting window size
+ * creating window with name "B170739CS"
+ * initiating mouse function by using glutMouseFunc
+ * initiating motion capture function by using glutMotionFunc
+ * initiating display function using glutDisplayFunc
+ * start rendering with initRendering function
+ * giving display function as the idle function, this runs display function whenever the program is idle
+ * starting the main loop 
+*/
 int main( int argc, char** argv )
 {
 
